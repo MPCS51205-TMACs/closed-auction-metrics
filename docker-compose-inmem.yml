@@ -37,7 +37,7 @@ services:
     image: closed-auction-metrics:latest
     container_name: closed-auction-metrics-service
     hostname: closed-auction-metrics-service
-    # entrypoint: ./main inmemory         # execute the compiled main program (golang)
+    entrypoint: python3 api_main.py         # execute the compiled main program (golang)
     tty: true
     stdin_open: true
     restart: on-failure                 # restarts container when it goes down
