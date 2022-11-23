@@ -1,15 +1,17 @@
 """This module acts as the API for microservice. Implements the FastAPI package."""
 
 import datetime
+import json
 from typing import Optional, Union, Dict
 from fastapi import FastAPI, Header, HTTPException, APIRouter
 from application.requests_responses import *
 import uvicorn
 from application.closed_auction_metrics_service import ClosedAuctionMetricsService
-from domain.auction_repository import AuctionRepository, inMemoryAuctionRepository
+from domain.auction_repository import AuctionRepository, InMemoryAuctionRepository
 import asyncio
 import pika, sys, os
-from multiprocessing import Process
+from multiprocessing import Process, Manager
+from multiprocessing.managers import BaseManager
 from infrastructure import utils
 from domain.bid import Bid
 from domain.closed_auction import ClosedAuction
@@ -252,9 +254,9 @@ class RESTAPI:
         return self.c_a_m_service.get_auction_visualization_html(item_id=item_id)
 
 
-def start_receiving_rabbitmsgs():
+def start_receiving_rabbitmsgs(c_a_m_service : ClosedAuctionMetricsService):
     try:
-        receive_rabbitmq_msgs()
+        receive_rabbitmq_msgs(c_a_m_service)
     except KeyboardInterrupt:
         print('Interrupted')
         try:
@@ -262,16 +264,16 @@ def start_receiving_rabbitmsgs():
         except SystemExit:
             os._exit(0)
 
-def receive_rabbitmq_msgs():
+def receive_rabbitmq_msgs(c_a_m_service : ClosedAuctionMetricsService):
 
     RABBITMQ_HOST = "rabbitmq-server" # e.g. "localhost"
-    EXCHANGE_NAME = "AUGlogs"
+    EXCHANGE_NAME = "auctionfinalizations"
     QUEUE_NAME = ""
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
     channel = connection.channel()
 
-    channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='fanout')
+    channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='fanout', durable=True)
     result = channel.queue_declare(queue=QUEUE_NAME, exclusive=True, ) #durable=True
     queue_name = result.method.queue
 
@@ -280,8 +282,9 @@ def receive_rabbitmq_msgs():
     print(' [*] Waiting for logs. To exit press CTRL+C')
 
     def callback(ch, method, properties, body):
-        print(" [x] %r" % body)
-
+        print(" [x] received new auction data.")
+        jsondata = json.loads(body)
+        c_a_m_service.add_auction_data(jsondata)
 
     # def callback(ch, method, properties, body):
     #     print(" [x] Received %r" % body.decode())
@@ -313,7 +316,7 @@ def startupRESTAPI(app: FastAPI, port:int, log_level:str = "info"):
 def main():
     LOCAL_PORT = 51224
     app = FastAPI()
-    auction_repo: AuctionRepository = inMemoryAuctionRepository()
+    auction_repo: AuctionRepository = InMemoryAuctionRepository()
 
     bid1 = Bid.generate_basic_bid(100,200)
     bid2 = Bid.generate_basic_bid(101,200)
@@ -332,7 +335,12 @@ def main():
     auction_repo.save_auction(auction3)
     
     # app.closed_auction_metrics_service = closed_auction_metrics_service.ClosedAuctionMetricsService(auction_repo)
-    c_a_m_service = ClosedAuctionMetricsService(auction_repo)
+    # c_a_m_service = ClosedAuctionMetricsService(auction_repo)
+    BaseManager.register('ClosedAuctionMetricsService', ClosedAuctionMetricsService)
+    manager = BaseManager()
+    manager.start()
+    c_a_m_service = manager.ClosedAuctionMetricsService(auction_repo)
+    
     api = RESTAPI(c_a_m_service)
     app.include_router(api.router)
     
@@ -340,7 +348,7 @@ def main():
     startupRESTAPI(app,LOCAL_PORT)
 
     # main function enters method that blocks and never returns
-    start_receiving_rabbitmsgs()
+    start_receiving_rabbitmsgs(c_a_m_service)
 
 if __name__ == "__main__":
     main()

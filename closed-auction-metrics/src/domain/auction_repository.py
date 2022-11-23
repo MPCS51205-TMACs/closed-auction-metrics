@@ -17,7 +17,7 @@ class AuctionRepository(ABC):
         pass
 
 
-class inMemoryAuctionRepository(AuctionRepository):
+class InMemoryAuctionRepository(AuctionRepository):
 
     def __init__(self) -> None:
         super().__init__()
@@ -75,17 +75,3 @@ def _limit_auction_results(closed_auctions: List[ClosedAuction], limit: int, toS
             _sort_auction_results(closed_auctions)
         closed_auctions = closed_auctions[len(closed_auctions)-limit:] # keep most recently ended closed-auctions until limit
     return closed_auctions
-
-class postgresSQLAuctionRepository(AuctionRepository):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._auctions: Dict[str,str] = dict() 
-
-    def get_auction(self, item_id: str) -> Optional[ClosedAuction]:
-        if item_id in self._auctions:
-            return self._auctions[item_id]
-        return None
-
-    def save_auction(self, auction: ClosedAuction):
-        self._auctions[auction._item_id] = auction # works for both add new and update

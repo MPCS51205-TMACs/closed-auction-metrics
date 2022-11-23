@@ -126,7 +126,7 @@ class ClosedAuction(object):
         ax.tick_params(axis='x', labelrotation = 45)
 
         if toSave:
-            plt.savefig('exgraph.png',bbox_inches="tight")
+            plt.savefig(f'bid_history_itemid{self._item_id}.png',bbox_inches="tight")
 
         return fig
 
