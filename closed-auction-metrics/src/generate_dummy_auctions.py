@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import List, Set
 import sys
 import datetime
@@ -7,8 +8,10 @@ from domain.closed_auction import ClosedAuction
 from domain.bid import Bid
 from infrastructure.utils import TIME_ZONE
 
-bids_filename = "exbids.txt"
-auctions_filename = "exauctions.txt"
+from domain.auction_repository_mongo import MongoDbAuctionRepository
+
+bids_filename = "db/exbids.txt"
+auctions_filename = "db/exauctions.txt"
 
 def generate_dummy_auctions() -> List[ClosedAuction]:
     
@@ -74,16 +77,25 @@ def generate_dummy_bids() -> List[Bid]:
     return bids
     
 
-def generate_dummy_auctions_csv() -> List[ClosedAuction]:
-    import csv
+# def generate_dummy_auctions_csv() -> List[ClosedAuction]:
+#     import csv
 
-    with open(filename, 'r') as file:
-        csvreader = csv.reader(file, delimiter=',')
-        for row in csvreader:
-            print(row)
+#     with open(filename, 'r') as file:
+#         csvreader = csv.reader(file, delimiter=',')
+#         for row in csvreader:
+#             print(row)
 
 if __name__ == "__main__":
     auctions = generate_dummy_auctions()
     bigauction = auctions[0]
-    bigauction.show_bid_history()
-    # generate_dummy_auctions_csv()
+    # bigauction.show_bid_history()
+    
+    # outputfile = "db/init/data.json"
+    # with open(outputfile, 'w') as convert_file:
+    #     convert_file.write(json.dumps([auction.convert_to_dict() for auction in auctions],indent=4))
+    
+    auction_repo = MongoDbAuctionRepository("mongo-server")
+
+    for auction in auctions:
+        print(f"saving: {auction}...",)
+        auction_repo.save_auction(auction)

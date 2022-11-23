@@ -159,18 +159,19 @@ class ClosedAuctionMetricsService():
         #     }
         # }
 
+        # note this data comes from the auctions context
         data = rawdata.copy()
-        data["Item"]["start_time"] = utils.toDatetimeFromStr(data["Item"]["start_time"])
-        data["Item"]["end_time"] = utils.toDatetimeFromStr(data["Item"]["end_time"])
+        data["Item"]["dt_start_time"] = utils.toDatetimeFromStr(data["Item"]["start_time"])
+        data["Item"]["dt_end_time"] = utils.toDatetimeFromStr(data["Item"]["end_time"])
 
         for bid in data["Bids"]:
-            bid["time_received"] = utils.toDatetimeFromStr(bid["time_received"])
+            bid["dt_time_received"] = utils.toDatetimeFromStr(bid["time_received"])
 
         if data["Cancellation"]:
-            data["Cancellation"]["time_received"] = utils.toDatetimeFromStr(data["Cancellation"]["time_received"])
+            data["Cancellation"]["dt_time_received"] = utils.toDatetimeFromStr(data["Cancellation"]["time_received"])
 
         if data["Finalization"]:
-            data["Finalization"]["time_received"] = utils.toDatetimeFromStr(data["Finalization"]["time_received"])
+            data["Finalization"]["dt_time_received"] = utils.toDatetimeFromStr(data["Finalization"]["time_received"])
 
         return data
 
@@ -200,18 +201,19 @@ class ClosedAuctionMetricsService():
         #         'time_received': '2022-11-23 02:00:28.061013'
         #     }
         # }
+        
 
         bids: List[Bid] = []
 
         for bid in refined_data["Bids"]:
-            bids.append(Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["time_received"],bid["active"]))
+            bids.append(Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["dt_time_received"],bid["active"]))
 
         item_id : str = refined_data["Item"]["item_id"]
         start_price_in_cents : int = refined_data["Item"]["start_price_in_cents"]
-        start_time : datetime.datetime = refined_data["Item"]["start_time"]
-        end_time  : datetime.datetime = refined_data["Item"]["end_time"]
-        cancellation_time  : Optional[datetime.datetime] = refined_data["Cancellation"]["time_received"] if refined_data["Cancellation"] else None
-        finalized_time  : datetime.datetime = refined_data["Finalization"]["time_received"]
+        start_time : datetime.datetime = refined_data["Item"]["dt_start_time"]
+        end_time  : datetime.datetime = refined_data["Item"]["dt_end_time"]
+        cancellation_time  : Optional[datetime.datetime] = refined_data["Cancellation"]["dt_time_received"] if refined_data["Cancellation"] else None
+        finalized_time  : datetime.datetime = refined_data["Finalization"]["dt_time_received"]
 
         new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids)
         return new_closed_auction

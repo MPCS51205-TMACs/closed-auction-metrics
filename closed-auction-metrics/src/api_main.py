@@ -8,6 +8,7 @@ from application.requests_responses import *
 import uvicorn
 from application.closed_auction_metrics_service import ClosedAuctionMetricsService
 from domain.auction_repository import AuctionRepository, InMemoryAuctionRepository
+from domain.auction_repository_mongo import MongoDbAuctionRepository
 import asyncio
 import pika, sys, os
 from multiprocessing import Process, Manager
@@ -315,40 +316,91 @@ def startupRESTAPI(app: FastAPI, port:int, log_level:str = "info"):
 
 def main():
     LOCAL_PORT = 51224
+
     app = FastAPI()
-    auction_repo: AuctionRepository = InMemoryAuctionRepository()
 
-    bid1 = Bid.generate_basic_bid(100,200)
-    bid2 = Bid.generate_basic_bid(101,200)
-    bid3 = Bid.generate_basic_bid(102,200)
-    auction1 = ClosedAuction.generate_auction([bid1,bid2,bid3],200)
+    inMemory = False
 
-    bid4 = Bid.generate_basic_bid(103,201)
-    bid5 = Bid.generate_basic_bid(104,201)
-    auction2 = ClosedAuction.generate_auction([bid4,bid5],201)
+    if inMemory:
+        auction_repo: AuctionRepository = InMemoryAuctionRepository()
 
-    bid6 = Bid.generate_basic_bid(105,202)
-    auction3 = ClosedAuction.generate_auction([bid6],202)
+        bid1 = Bid.generate_basic_bid(100,200)
+        bid2 = Bid.generate_basic_bid(101,200)
+        bid3 = Bid.generate_basic_bid(102,200)
+        start = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
+        duration = datetime.timedelta(minutes=30)
+        auction1 = ClosedAuction.generate_auction([bid1,bid2,bid3],200, start, duration)
 
-    auction_repo.save_auction(auction1)
-    auction_repo.save_auction(auction2)
-    auction_repo.save_auction(auction3)
+        bid4 = Bid.generate_basic_bid(103,201)
+        bid5 = Bid.generate_basic_bid(104,201)
+        start2 = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=1, minute=10, second=0,microsecond=130002 ))
+        duration2 = datetime.timedelta(minutes=24)
+        auction2 = ClosedAuction.generate_auction([bid4,bid5],201, start2, duration2)
+
+        bid6 = Bid.generate_basic_bid(105,202)
+        start3 = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=1, minute=17, second=10,microsecond=130002 ))
+        duration3 = datetime.timedelta(minutes=14)
+        auction3 = ClosedAuction.generate_auction([bid6],202, start3,duration)
+
+        auction_repo.save_auction(auction1)
+        auction_repo.save_auction(auction2)
+        auction_repo.save_auction(auction3)
     
-    # app.closed_auction_metrics_service = closed_auction_metrics_service.ClosedAuctionMetricsService(auction_repo)
-    # c_a_m_service = ClosedAuctionMetricsService(auction_repo)
-    BaseManager.register('ClosedAuctionMetricsService', ClosedAuctionMetricsService)
-    manager = BaseManager()
-    manager.start()
-    c_a_m_service = manager.ClosedAuctionMetricsService(auction_repo)
+        # app.closed_auction_metrics_service = closed_auction_metrics_service.ClosedAuctionMetricsService(auction_repo)
+        # c_a_m_service = ClosedAuctionMetricsService(auction_repo)
+        BaseManager.register('ClosedAuctionMetricsService', ClosedAuctionMetricsService)
+        manager = BaseManager()
+        manager.start()
+        c_a_m_service = manager.ClosedAuctionMetricsService(auction_repo)
     
-    api = RESTAPI(c_a_m_service)
-    app.include_router(api.router)
-    
-    # spawn child process to handle the HTTP requests against the REST api
-    startupRESTAPI(app,LOCAL_PORT)
+        api = RESTAPI(c_a_m_service)
+        app.include_router(api.router)
+        
+        # spawn child process to handle the HTTP requests against the REST api
+        startupRESTAPI(app,LOCAL_PORT)
 
-    # main function enters method that blocks and never returns
-    start_receiving_rabbitmsgs(c_a_m_service)
+        # main function enters method that blocks and never returns
+        start_receiving_rabbitmsgs(c_a_m_service)
+    else: # sql repos
+        # auction_repo: AuctionRepository = InMemoryAuctionRepository()
+        auction_repo1: AuctionRepository = MongoDbAuctionRepository("mongo-server")
+        auction_repo2: AuctionRepository = MongoDbAuctionRepository("mongo-server")
+
+        # bid1 = Bid.generate_basic_bid(100,200)
+        # bid2 = Bid.generate_basic_bid(101,200)
+        # bid3 = Bid.generate_basic_bid(102,200)
+        # start = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
+        # duration = datetime.timedelta(minutes=30)
+        # auction1 = ClosedAuction.generate_auction([bid1,bid2,bid3],200, start, duration)
+
+        # bid4 = Bid.generate_basic_bid(103,201)
+        # bid5 = Bid.generate_basic_bid(104,201)
+        # start2 = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=1, minute=10, second=0,microsecond=130002 ))
+        # duration2 = datetime.timedelta(minutes=24)
+        # auction2 = ClosedAuction.generate_auction([bid4,bid5],201, start2, duration2)
+
+        # bid6 = Bid.generate_basic_bid(105,202)
+        # start3 = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=1, minute=17, second=10,microsecond=130002 ))
+        # duration3 = datetime.timedelta(minutes=14)
+        # auction3 = ClosedAuction.generate_auction([bid6],202, start3,duration)
+
+        # auction_repo2.save_auction(auction1)
+        # auction_repo2.save_auction(auction2)
+        # auction_repo2.save_auction(auction3)
+
+        c_a_m_service1 = ClosedAuctionMetricsService(auction_repo1)
+        c_a_m_service2 = ClosedAuctionMetricsService(auction_repo2)
+
+        api = RESTAPI(c_a_m_service1)
+        app.include_router(api.router)
+        
+        # spawn child process to handle the HTTP requests against the REST api
+        startupRESTAPI(app,LOCAL_PORT)
+
+        # main function enters method that blocks and never returns
+        start_receiving_rabbitmsgs(c_a_m_service2)
+
+
 
 if __name__ == "__main__":
     main()

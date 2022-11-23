@@ -57,6 +57,7 @@ class Bid():
             'bidder_user_id': self._bidder_user_id,
             'amount_in_cents': self._amount_in_cents,
             'time_received': self._time_received,
+            'str_time_received': utils.toSQLTimestamp6Repr(self._time_received),
             'active': self._active,
         }
         

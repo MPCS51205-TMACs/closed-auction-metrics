@@ -140,7 +140,7 @@ class ClosedAuction(object):
 
             html = '<img src=\'data:image/png;base64,{}\'>'.format(encoded)
 
-            return html, True
+            return html, False
 
             # cache perhaps?
             # with open('test.html','w') as f: 
@@ -148,7 +148,7 @@ class ClosedAuction(object):
         except:
             msg = "encountered error generating graphics; " +\
             "see ClosedAuction.generate_bid_history_as_html() in closed-auctions-service"
-            return msg, False
+            return msg, True
 
 
 
@@ -181,6 +181,10 @@ class ClosedAuction(object):
             'end_time': self._end_time,
             'cancellation_time': self._cancellation_time if self._cancellation_time else "",
             'finalized_time': self._finalized_time,
+            'str_start_time': utils.toSQLTimestamp6Repr(self._start_time),
+            'str_end_time': utils.toSQLTimestamp6Repr(self._end_time),
+            'str_cancellation_time': utils.toSQLTimestamp6Repr(self._cancellation_time) if self._cancellation_time else "",
+            'str_finalized_time': utils.toSQLTimestamp6Repr(self._finalized_time),
             'bids': [bid.convert_to_dict_w_datetimes() for bid in self._bids],
         }
 

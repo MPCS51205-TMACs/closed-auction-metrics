@@ -12,7 +12,7 @@ from pprint import pprint # to print bson like data prettier
 DATABASE_NAME = "closed_auction_metrics_db"
 AUCTION_COLLECTION_NAME = "auctions"
 
-class PostgresSQLAuctionRepository(AuctionRepository):
+class MongoDbAuctionRepository(AuctionRepository):
 
     # (typical) MONGO_DB_CONNECTION_PATH = "mongodb://localhost:27017/"
 
@@ -28,22 +28,22 @@ class PostgresSQLAuctionRepository(AuctionRepository):
 
     def __init__(self, hostname: str, port: str= "27017") -> None:
 
-        mongo_db_connection_url = f"mongodb://{hostname}:{port}/"
+        self.mongo_db_connection_url = f"mongodb://{hostname}:{port}/"
         
         # establish connection to where mongo database lives (will live)
         print("establishing connection to MongoDB server...")
-        client = MongoClient(mongo_db_connection_url)
+        self.client = MongoClient(self.mongo_db_connection_url)
 
         # # drop database (if already exists)?? optional
-        print("dropping database '{DATABASE_NAME}'")
-        client.drop_database(DATABASE_NAME)
+        # print("dropping database '{DATABASE_NAME}'")
+        # self.client.drop_database(DATABASE_NAME)
 
         # create database if it doesn't already exist (this done automatically?)
-        if DATABASE_NAME not in client.list_database_names():
+        if DATABASE_NAME not in self.client.list_database_names():
             print(f"database '{DATABASE_NAME}' does not exist")
         else:
             print(f"database '{DATABASE_NAME}' appears to already exist")
-        self.my_db = client[DATABASE_NAME]
+        self.my_db = self.client[DATABASE_NAME]
 
         # create collection to store auction data
         if AUCTION_COLLECTION_NAME not in self.my_db.list_collection_names():
@@ -53,12 +53,12 @@ class PostgresSQLAuctionRepository(AuctionRepository):
             print(f"collection '{AUCTION_COLLECTION_NAME}' appears to already exist")
             auction_collection = self.my_db[AUCTION_COLLECTION_NAME]
 
-        
+
     def _get_auction_collection(self) -> Collection:
         return self.my_db[AUCTION_COLLECTION_NAME]
 
     def check_server_status(self):
-        serverStatusResult = self.my_db.command("serverStatus")
+        serverStatusResult = self.client[DATABASE_NAME].command("serverStatus")
         pprint(serverStatusResult)
 
     def get_auction(self, item_id: str) -> Optional[ClosedAuction]:
@@ -106,16 +106,33 @@ class PostgresSQLAuctionRepository(AuctionRepository):
         auction_collection.update_one({ '_id' : auction._item_id}, { '$set': document }, upsert=True)
 
     def _mongoDataToClosedAuction(self, data: Dict) -> ClosedAuction:
+
+        data["dt_start_time"] = utils.toDatetimeFromStr(data["str_start_time"])
+        data["dt_end_time"] = utils.toDatetimeFromStr(data["str_end_time"])
+
+        for bid in data["bids"]:
+            bid["dt_time_received"] = utils.toDatetimeFromStr(bid["str_time_received"])
+
+        if data["str_cancellation_time"]:
+            data["dt_cancellation_time"] = utils.toDatetimeFromStr(data["str_cancellation_time"])
+        else:
+            data["dt_cancellation_time"] = None
+
+        if data["str_finalized_time"]:
+            data["dt_finalized_time"] = utils.toDatetimeFromStr(data["str_finalized_time"])
+        else:
+            data["dt_finalized_time"] = None
+
         bids: List[Bid] = []
         for bid in data["bids"]:
-            bids.append(Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["time_received"],bid["active"]))
+            bids.append(Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["dt_time_received"],bid["active"]))
 
         item_id : str = data["item_id"]
         start_price_in_cents : int = data["start_price_in_cents"]
-        start_time : datetime.datetime = data["start_time"]
-        end_time  : datetime.datetime = data["end_time"]
-        cancellation_time  : Optional[datetime.datetime] = data["cancellation_time"] if data["cancellation_time"]!="" else None
-        finalized_time  : datetime.datetime = data["finalized_time"]
+        start_time : datetime.datetime = data["dt_start_time"]
+        end_time  : datetime.datetime = data["dt_end_time"]
+        cancellation_time  : Optional[datetime.datetime] = data["dt_cancellation_time"] if data["dt_cancellation_time"] else None
+        finalized_time  : datetime.datetime = data["dt_finalized_time"]
 
         new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids)
         return new_closed_auction
