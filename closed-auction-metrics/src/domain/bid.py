@@ -44,6 +44,23 @@ class Bid():
             'active': self._active,
         }
 
+
+    def convert_to_dict_w_datetimes(self) -> dict:
+        """
+        returns a json-like representation of the internal contents
+        of a Bid. keeps time objects as datetime objects
+        """
+        
+        return {
+            'bid_id': self._bid_id,
+            'item_id': self._item_id,
+            'bidder_user_id': self._bidder_user_id,
+            'amount_in_cents': self._amount_in_cents,
+            'time_received': self._time_received,
+            'active': self._active,
+        }
+        
+
     @staticmethod    
     def generate_basic_bid(bidId: int, itemId: int) -> Bid:
         bid_id = str(bidId)

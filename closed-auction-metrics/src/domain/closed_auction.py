@@ -168,13 +168,30 @@ class ClosedAuction(object):
             'bids': [bid.convert_to_dict() for bid in self._bids],
         }
 
+    def convert_to_dict_w_datetimes(self) -> Dict:
+        """
+        returns a json-like representation of the internal contents
+        of a ClosedAuction. keeps times as date-time objects
+        """
+
+        return {
+            'item_id': self._item_id,
+            'start_price_in_cents': self._start_price_in_cents,
+            'start_time': self._start_time,
+            'end_time': self._end_time,
+            'cancellation_time': self._cancellation_time if self._cancellation_time else "",
+            'finalized_time': self._finalized_time,
+            'bids': [bid.convert_to_dict_w_datetimes() for bid in self._bids],
+        }
+
     @staticmethod
-    def generate_auction(bids: List[Bid],  itemid: int) -> ClosedAuction:
+    def generate_auction(bids: List[Bid],  itemid: int, time_start: datetime.datetime, duration: datetime.timedelta) -> ClosedAuction:
         
         item_id = str(itemid)
         start_price_in_cents = 3400 # $34
-        time_start = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
-        time_end = time_start + datetime.timedelta(days=1)
+        # time_start = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
+        # time_end = time_start + datetime.timedelta(days=1)
+        time_end = time_start + duration
         time_finalized = time_end + datetime.timedelta(minutes=1)
         return ClosedAuction(item_id,start_price_in_cents,time_start,time_end,None,time_finalized,bids)
 
