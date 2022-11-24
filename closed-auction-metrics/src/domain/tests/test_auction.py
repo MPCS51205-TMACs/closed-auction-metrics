@@ -20,6 +20,3 @@ class TestBid:
     def test_display(cls):
         print(cls.auction)
 
-    # def test_generate_bid_history_as_html(cls):
-    #     html, withError = cls.auction.generate_bid_history_as_html()
-    

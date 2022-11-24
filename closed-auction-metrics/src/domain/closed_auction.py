@@ -80,19 +80,10 @@ class ClosedAuction(object):
             print(time)
         amounts = [bid._amount_in_cents/100 for bid in self._bids]
 
-        # x = [datetime.datetime(2010, 12, 1, 10, 0),
-        #     datetime.datetime(2011, 1, 4, 9, 0),
-        #     datetime.datetime(2011, 5, 5, 9, 0)]
-        # y = [4, 9, 2]
-
-        # ax = plt.subplot(111)
         fig, ax = plt.subplots()
         ax.step(times, amounts, where='post', label='post')
         ax.plot(times, amounts, 'o--', color='grey', alpha=0.3)
         ax.grid()
-        # plt.step(times, amounts, where='post', label='post')
-        # plt.plot(times, amounts, 'o--', color='grey', alpha=0.3)
-        # plt.grid(axis='x', color='0.95')
 
         max_bid : Bid = None
         for bid in self._bids:
@@ -105,24 +96,13 @@ class ClosedAuction(object):
         if self._cancellation_time:
             ax.axvline(x = self._cancellation_time, color = 'r', label = 'axvline - full height',ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
         ax.axvline(x = self._end_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
-        # plt.axvline(x = self._start_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = highest_bid_offer_amount, linestyle = 'dashed')
-        # if self._cancellation_time:
-        #     plt.axvline(x = self._cancellation_time, color = 'r', label = 'axvline - full height',ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
-        # plt.axvline(x = self._end_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
 
         ax.set_xlabel('time')
         ax.set_ylabel('bid offer amount [$]')
-        # plt.xlabel('time')
-        # plt.ylabel('bid offer amount [$]')
-
-        # plt.legend(title='Parameter where:')
         ax.set_title(f'Auction for item "{self._item_id}"')
-        # plt.title(f'Auction for item "{self._item_id}"')
-        # ax.bar(times, amounts, width=10)
-        # ax.xaxis_date()
 
         _annot_max(highest_bid_offer_amount_time,highest_bid_offer_amount,ax)
-        # plt.draw()
+
         ax.tick_params(axis='x', labelrotation = 45)
 
         if toSave:
@@ -193,8 +173,6 @@ class ClosedAuction(object):
         
         item_id = str(itemid)
         start_price_in_cents = 3400 # $34
-        # time_start = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
-        # time_end = time_start + datetime.timedelta(days=1)
         time_end = time_start + duration
         time_finalized = time_end + datetime.timedelta(minutes=1)
         return ClosedAuction(item_id,start_price_in_cents,time_start,time_end,None,time_finalized,bids)

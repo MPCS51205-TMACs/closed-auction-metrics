@@ -23,15 +23,14 @@ services:
     environment:                        # sets environment variables
       # - POSTGRES_USER=postgres
       - MONGODB_PASS=password
-    # volumes:
-    #   - ./auctions-service/db/create_db_and_empty_tables.sql:/docker-entrypoint-initdb.d/create_db_and_empty_tables.sql # runs if !exist data volume
-    #   - ./auctions-service/db/fill_tables_w_data.sql:/docker-entrypoint-initdb.d/fill_tables_w_data.sql # runs if !exist data volume
-    #   - pgdata:/var/lib/postgresql/data # allows persistence; see https://github.com/docker-library/postgres/issues/116
+    volumes:
+      - mongodata:/data/db # allows persistence; see https://betterprogramming.pub/persistent-databases-using-dockers-volumes-and-mongodb-9ac284c25b39
     networks:
       - my-application-network
     ports:
       - "28017:28017"
       - "27017:27017"
+
     restart: always
   closed-auction-metrics-service:
     image: closed-auction-metrics:latest

@@ -32,10 +32,6 @@ class RESTAPI:
         self.router.add_api_route(f"/api/{VERSION}"+"/closedauctions/", self.get_closed_auctions, methods=["GET"])
         self.router.add_api_route(f"/api/{VERSION}"+"/closedauctions/{item_id}/visualization", self.get_closed_auction_visualization, response_class=HTMLResponse,methods=["GET"])
         
-
-    def hello(self):
-        return {"Hello": self.name}
-
     def index(self) -> dict:
         """Returns a default response when no endpoint is specified.
 
@@ -236,7 +232,7 @@ class RESTAPI:
 
     def get_closed_auction_visualization(self, item_id:str) -> HTMLResponse:
         """
-        Returns a response containing all closed auctions between a specific time.
+        Returns an html response showing the bid history for the particular item.
 
         Parameters
         ----------
@@ -299,8 +295,6 @@ def receive_rabbitmq_msgs(c_a_m_service : ClosedAuctionMetricsService):
     # channel.basic_consume(queue='task_queue', on_message_callback=callback)
     channel.start_consuming()
 
-
-
 def startupRESTAPI(app: FastAPI, port:int, log_level:str = "info"):
     # uvicorn.run("api_main:app", port=51224, log_level=log_level)
     proc = Process(target=uvicorn.run,
@@ -312,16 +306,17 @@ def startupRESTAPI(app: FastAPI, port:int, log_level:str = "info"):
                     daemon=True)
     proc.start()
 
-  
+LOCAL_PORT = 51224 # port for this service (And its restful api)
+DATABASE_NAME = "closed_auction_metrics_db" # name of mongo db database for this service
+AUCTION_COLLECTION_NAME = "auctions" 
 
 def main():
-    LOCAL_PORT = 51224
 
     app = FastAPI()
 
     inMemory = False
 
-    if inMemory:
+    if inMemory: # use in memory repos
         auction_repo: AuctionRepository = InMemoryAuctionRepository()
 
         bid1 = Bid.generate_basic_bid(100,200)
@@ -361,7 +356,7 @@ def main():
 
         # main function enters method that blocks and never returns
         start_receiving_rabbitmsgs(c_a_m_service)
-    else: # sql repos
+    else: # use sql repos
         # auction_repo: AuctionRepository = InMemoryAuctionRepository()
         auction_repo1: AuctionRepository = MongoDbAuctionRepository("mongo-server")
         auction_repo2: AuctionRepository = MongoDbAuctionRepository("mongo-server")
@@ -400,21 +395,5 @@ def main():
         # main function enters method that blocks and never returns
         start_receiving_rabbitmsgs(c_a_m_service2)
 
-
-
 if __name__ == "__main__":
     main()
-
-
-    
-# async def function_asyc():
-#     i = 0
-#     while i < 1000000:
-#         i += 1
-#         if i % 50000 == 0:
-#             print("Hello, I'm Abhishek")
-#             print("GFG is Great")
-#             await asyncio.sleep(0.01)
-  
-# async def function_2():
-#     print("\n HELLO WORLD \n")

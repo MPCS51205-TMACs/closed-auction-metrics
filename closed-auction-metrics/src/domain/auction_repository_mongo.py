@@ -2,29 +2,15 @@
 from domain.closed_auction import *
 from domain.auction_repository import *
 from typing import Dict
+from api_main import DATABASE_NAME, AUCTION_COLLECTION_NAME
 
 from pymongo import MongoClient
 from pymongo.database import Database, Collection
 from pprint import pprint # to print bson like data prettier
 
-
-# name the database for the project
-DATABASE_NAME = "closed_auction_metrics_db"
-AUCTION_COLLECTION_NAME = "auctions"
-
 class MongoDbAuctionRepository(AuctionRepository):
 
     # (typical) MONGO_DB_CONNECTION_PATH = "mongodb://localhost:27017/"
-
-    # def _connect(self) -> None:
-    #     self._client = MongoClient(self._mongo_db_connection_url)
-
-    # def _drop_create_db(self) -> Database:
-    #     # drop database (if already exists)?? optional
-    #     self._client.drop_database(DATABASE_NAME)
-
-    #     # create database with name specified above
-    #     self._my_db = self._client[DATABASE_NAME]
 
     def __init__(self, hostname: str, port: str= "27017") -> None:
 

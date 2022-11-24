@@ -14,7 +14,6 @@ class ClosedAuctionMetricsService():
     def add_auction_data(self, data : Dict):
         print("[ClosedAuctionMetricsService] adding new auction data...")
         # example data dicts received
-
         # ex_data = {
         #     'Item': {
         #             'item_id': '20',
@@ -59,11 +58,11 @@ class ClosedAuctionMetricsService():
         # }
         
         refined_data = self._cast_str_times_to_datetimes(data) # creates a new dict
-        print()
-        print(refined_data)
+        # print()
+        # print(refined_data)
         
         closed_auction = self._create_closed_auction_from_data(refined_data) 
-        print()
+        # print()
         print("[ClosedAuctionMetricsService] created ClosedAuction object from refined data")
         print(closed_auction)
 
