@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict
 
 from application.closed_auction_metrics_service import ClosedAuctionMetricsService
 from domain.auction_repository import AuctionRepository, InMemoryAuctionRepository
-from domain.auction_repository_mongo import PostgresSQLAuctionRepository
+from domain.auction_repository_mongo import MongoDbAuctionRepository
 from infrastructure import utils
 from domain.bid import Bid
 from domain.closed_auction import ClosedAuction
@@ -10,7 +10,7 @@ from domain.closed_auction import ClosedAuction
 import datetime
 
 def main():
-    auctionRepo = PostgresSQLAuctionRepository("mongo-server")
+    auctionRepo = MongoDbAuctionRepository("mongo-server")
 
     bid1 = Bid.generate_basic_bid(100,200)
     bid2 = Bid.generate_basic_bid(101,200)

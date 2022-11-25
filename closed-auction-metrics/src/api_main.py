@@ -17,6 +17,7 @@ from infrastructure import utils
 from domain.bid import Bid
 from domain.closed_auction import ClosedAuction
 from fastapi.responses import HTMLResponse
+import pprint
 
 
 VERSION = 'v1'
@@ -26,7 +27,7 @@ class RESTAPI:
     def __init__(self, c_a_m_service: ClosedAuctionMetricsService):
         self.c_a_m_service = c_a_m_service
         self.router = APIRouter()
-        self.router.add_api_route("/hello", self.hello, methods=["GET"])
+        # self.router.add_api_route("/hello", self.hello, methods=["GET"])
         self.router.add_api_route("/", self.index, methods=["GET"])
         self.router.add_api_route(f"/api/{VERSION}"+"/closedauctions/{item_id}", self.get_closed_auction, methods=["GET"])
         self.router.add_api_route(f"/api/{VERSION}"+"/closedauctions/", self.get_closed_auctions, methods=["GET"])
@@ -264,14 +265,14 @@ def start_receiving_rabbitmsgs(c_a_m_service : ClosedAuctionMetricsService):
 def receive_rabbitmq_msgs(c_a_m_service : ClosedAuctionMetricsService):
 
     RABBITMQ_HOST = "rabbitmq-server" # e.g. "localhost"
-    EXCHANGE_NAME = "auctionfinalizations"
-    QUEUE_NAME = ""
+    EXCHANGE_NAME = "auction.end"
+    QUEUE_NAME = "cam.consume-auctionend"
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
     channel = connection.channel()
 
     channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='fanout', durable=True)
-    result = channel.queue_declare(queue=QUEUE_NAME, exclusive=True, ) #durable=True
+    result = channel.queue_declare(queue=QUEUE_NAME, durable=True) #durable=True exclusive=False,
     queue_name = result.method.queue
 
     channel.queue_bind(exchange=EXCHANGE_NAME, queue=queue_name)
@@ -281,6 +282,7 @@ def receive_rabbitmq_msgs(c_a_m_service : ClosedAuctionMetricsService):
     def callback(ch, method, properties, body):
         print(" [x] received new auction data.")
         jsondata = json.loads(body)
+        print(json.dumps(jsondata, indent=2))
         c_a_m_service.add_auction_data(jsondata)
 
     # def callback(ch, method, properties, body):
@@ -307,8 +309,6 @@ def startupRESTAPI(app: FastAPI, port:int, log_level:str = "info"):
     proc.start()
 
 LOCAL_PORT = 51224 # port for this service (And its restful api)
-DATABASE_NAME = "closed_auction_metrics_db" # name of mongo db database for this service
-AUCTION_COLLECTION_NAME = "auctions" 
 
 def main():
 

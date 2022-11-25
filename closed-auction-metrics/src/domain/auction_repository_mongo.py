@@ -2,11 +2,13 @@
 from domain.closed_auction import *
 from domain.auction_repository import *
 from typing import Dict
-from api_main import DATABASE_NAME, AUCTION_COLLECTION_NAME
 
 from pymongo import MongoClient
 from pymongo.database import Database, Collection
 from pprint import pprint # to print bson like data prettier
+
+DATABASE_NAME = "closed_auction_metrics_db" # name of mongo db database for this service
+AUCTION_COLLECTION_NAME = "auctions" 
 
 class MongoDbAuctionRepository(AuctionRepository):
 
