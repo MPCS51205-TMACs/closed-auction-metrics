@@ -358,8 +358,9 @@ def main():
         start_receiving_rabbitmsgs(c_a_m_service)
     else: # use sql repos
         # auction_repo: AuctionRepository = InMemoryAuctionRepository()
-        auction_repo1: AuctionRepository = MongoDbAuctionRepository("mongo-server")
-        auction_repo2: AuctionRepository = MongoDbAuctionRepository("mongo-server")
+        CAM_MONGO_CONTAINER_HOSTNAME = "cam-mongo-server"
+        auction_repo1: AuctionRepository = MongoDbAuctionRepository(CAM_MONGO_CONTAINER_HOSTNAME)
+        auction_repo2: AuctionRepository = MongoDbAuctionRepository(CAM_MONGO_CONTAINER_HOSTNAME)
 
         # bid1 = Bid.generate_basic_bid(100,200)
         # bid2 = Bid.generate_basic_bid(101,200)
