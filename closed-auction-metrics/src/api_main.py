@@ -117,7 +117,7 @@ class RESTAPI:
 
         return self.c_a_m_service.get_auction_data(item_id=item_id,start=start,end=end,limit=limit)
 
-    def get_closed_auctions(self, start: str=None, end: str=None, limit: str=None) -> Dict:
+    def get_closed_auctions(self, start: str=None, end: str=None, limit: int=None) -> Dict:
         """
         Returns a response containing all closed auctions between a specific time.
 

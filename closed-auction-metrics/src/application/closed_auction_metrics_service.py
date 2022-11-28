@@ -100,7 +100,7 @@ class ClosedAuctionMetricsService():
             else :
                 return dict()
         else:
-            auctions = self._auction_repo.get_auctions(leftBound = start, rightBound = end) # returns auctions that were over between these times
+            auctions = self._auction_repo.get_auctions(leftBound = start, rightBound = end, limit = limit) # returns auctions that were over between these times
             return {auction._item_id : auction.convert_to_dict() for auction in auctions}
 
     def get_auction_visualization_html(self,item_id: str) -> HTMLResponse:
@@ -156,6 +156,14 @@ class ClosedAuctionMetricsService():
         #     'Finalization': {
         #         'time_received': '2022-11-23 02:00:28.061013'
         #     }
+        #         "WinningBid": {
+        #               "bid_id": "104",
+        #               "item_id": "20",
+        #               "bidder_user_id": "katharine2",
+        #               "time_received": "2014-02-04 00:00:01.000000",
+        #               "amount_in_cents": 10,
+        #               "active": true
+        #     }
         # }
 
         # note this data comes from the auctions context
@@ -171,6 +179,9 @@ class ClosedAuctionMetricsService():
 
         if data["Finalization"]:
             data["Finalization"]["dt_time_received"] = utils.toDatetimeFromStr(data["Finalization"]["time_received"])
+
+        if data["WinningBid"]:
+            data["WinningBid"]["dt_time_received"] = utils.toDatetimeFromStr(data["WinningBid"]["time_received"])
 
         return data
 
@@ -199,9 +210,17 @@ class ClosedAuctionMetricsService():
         #     'Finalization': {
         #         'time_received': '2022-11-23 02:00:28.061013'
         #     }
+        #         "WinningBid": {
+        #               "bid_id": "104",
+        #               "item_id": "20",
+        #               "bidder_user_id": "katharine2",
+        #               "time_received": "2014-02-04 00:00:01.000000",
+        #               "amount_in_cents": 10,
+        #               "active": true
+        #     }
         # }
         
-
+        
         bids: List[Bid] = []
 
         for bid in refined_data["Bids"]:
@@ -214,5 +233,9 @@ class ClosedAuctionMetricsService():
         cancellation_time  : Optional[datetime.datetime] = refined_data["Cancellation"]["dt_time_received"] if refined_data["Cancellation"] else None
         finalized_time  : datetime.datetime = refined_data["Finalization"]["dt_time_received"]
 
-        new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids)
+        if refined_data["WinningBid"]:
+            bid_data = refined_data["WinningBid"]
+            winning_bid = Bid(bid_data["bid_id"],bid_data["item_id"],bid_data["bidder_user_id"],bid_data["amount_in_cents"],bid_data["dt_time_received"],bid_data["active"])
+
+        new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids,winning_bid)
         return new_closed_auction

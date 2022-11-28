@@ -111,6 +111,16 @@ class MongoDbAuctionRepository(AuctionRepository):
         else:
             data["dt_finalized_time"] = None
 
+        if data["str_finalized_time"]:
+            data["dt_finalized_time"] = utils.toDatetimeFromStr(data["str_finalized_time"])
+        else:
+            data["dt_finalized_time"] = None
+
+        winning_bid = None
+        if "winning_bid" in data.keys():
+            bid_data = data["winning_bid"]
+            winning_bid = Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["dt_time_received"],bid["active"])
+
         bids: List[Bid] = []
         for bid in data["bids"]:
             bids.append(Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["dt_time_received"],bid["active"]))
@@ -122,7 +132,7 @@ class MongoDbAuctionRepository(AuctionRepository):
         cancellation_time  : Optional[datetime.datetime] = data["dt_cancellation_time"] if data["dt_cancellation_time"] else None
         finalized_time  : datetime.datetime = data["dt_finalized_time"]
 
-        new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids)
+        new_closed_auction = ClosedAuction(item_id,start_price_in_cents,start_time,end_time,cancellation_time,finalized_time,bids, winning_bid)
         return new_closed_auction
 
 

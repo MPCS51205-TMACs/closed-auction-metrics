@@ -9,7 +9,7 @@ class AuctionRepository(ABC):
         pass
 
     @abstractmethod
-    def get_auctions(self, leftBound: datetime.datetime, rightBound: datetime.datetime) -> List[ClosedAuction]:
+    def get_auctions(self, leftBound: datetime.datetime, rightBound: datetime.datetime,  limit: Optional[int]=None) -> List[ClosedAuction]:
         pass
 
     @abstractmethod
@@ -55,7 +55,7 @@ class InMemoryAuctionRepository(AuctionRepository):
 
         _sort_auction_results(auction_list_trimmed)
 
-        if limit:
+        if limit is not None:
             return _limit_auction_results(auction_list_trimmed,limit,toSort=False)
         else:
             return auction_list_trimmed

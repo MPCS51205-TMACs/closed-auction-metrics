@@ -22,7 +22,7 @@ class ClosedAuction(object):
         cancellation_time: Optional[datetime.datetime],
         finalized_time : datetime.datetime,
         bids: List[Bid],
-        # winning_bid: Optional[Bid]
+        winning_bid: Optional[Bid],
         ) -> None:
 
         self._item_id = item_id
@@ -32,13 +32,19 @@ class ClosedAuction(object):
         self._cancellation_time = cancellation_time
         self._finalized_time = finalized_time
         self._bids = bids
-        # self._winning_bid = winning_bid
+        self._winning_bid = winning_bid
 
     @staticmethod
     def create_from_data(data_dict : Dict) -> ClosedAuction:
         pass
 
     def winning_bid(self) -> Optional[Bid]:
+        if self._winning_bid is not None:
+            return self._winning_bid
+        else:
+            return self.infer_winning_bid()
+
+    def infer_winning_bid(self) -> Optional[Bid]:
         if len(self._bids) == 0 or self._cancellation_time is not None:
             return None
         
@@ -146,6 +152,7 @@ class ClosedAuction(object):
             'cancellation_time': utils.toSQLTimestamp6Repr(self._cancellation_time) if self._cancellation_time else "",
             'finalized_time': utils.toSQLTimestamp6Repr(self._finalized_time),
             'bids': [bid.convert_to_dict() for bid in self._bids],
+            'winning_bid': self._winning_bid.convert_to_dict() if self._winning_bid else None,
         }
 
     def convert_to_dict_w_datetimes(self) -> Dict:
@@ -166,16 +173,17 @@ class ClosedAuction(object):
             'str_cancellation_time': utils.toSQLTimestamp6Repr(self._cancellation_time) if self._cancellation_time else "",
             'str_finalized_time': utils.toSQLTimestamp6Repr(self._finalized_time),
             'bids': [bid.convert_to_dict_w_datetimes() for bid in self._bids],
+            'winning_bid': self._winning_bid.convert_to_dict_w_datetimes() if self._winning_bid else None,
         }
 
     @staticmethod
-    def generate_auction(bids: List[Bid],  itemid: int, time_start: datetime.datetime, duration: datetime.timedelta) -> ClosedAuction:
+    def generate_auction(bids: List[Bid],  itemid: int, time_start: datetime.datetime, duration: datetime.timedelta, winning_bid: Optional[Bid]) -> ClosedAuction:
         
         item_id = str(itemid)
         start_price_in_cents = 3400 # $34
         time_end = time_start + duration
         time_finalized = time_end + datetime.timedelta(minutes=1)
-        return ClosedAuction(item_id,start_price_in_cents,time_start,time_end,None,time_finalized,bids)
+        return ClosedAuction(item_id,start_price_in_cents,time_start,time_end,None,time_finalized,bids,winning_bid)
 
 def _annot_max(xmax,ymax, ax=None):
 
