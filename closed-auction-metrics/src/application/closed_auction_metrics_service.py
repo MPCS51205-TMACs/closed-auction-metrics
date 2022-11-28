@@ -233,6 +233,7 @@ class ClosedAuctionMetricsService():
         cancellation_time  : Optional[datetime.datetime] = refined_data["Cancellation"]["dt_time_received"] if refined_data["Cancellation"] else None
         finalized_time  : datetime.datetime = refined_data["Finalization"]["dt_time_received"]
 
+        winning_bid = None
         if refined_data["WinningBid"]:
             bid_data = refined_data["WinningBid"]
             winning_bid = Bid(bid_data["bid_id"],bid_data["item_id"],bid_data["bidder_user_id"],bid_data["amount_in_cents"],bid_data["dt_time_received"],bid_data["active"])
