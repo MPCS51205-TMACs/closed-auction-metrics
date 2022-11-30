@@ -117,9 +117,10 @@ class MongoDbAuctionRepository(AuctionRepository):
             data["dt_finalized_time"] = None
 
         winning_bid = None
-        if "winning_bid" in data.keys():
+        if "winning_bid" in data.keys() and data["winning_bid"] is not None:
             bid_data = data["winning_bid"]
-            winning_bid = Bid(bid["bid_id"],bid["item_id"],bid["bidder_user_id"],bid["amount_in_cents"],bid["dt_time_received"],bid["active"])
+            # bid_data["dt_time_received"] = utils.toDatetimeFromStr(data["str_time_received"])
+            winning_bid = Bid(bid_data["bid_id"],bid_data["item_id"],bid_data["bidder_user_id"],bid_data["amount_in_cents"],bid_data["time_received"],bid_data["active"])
 
         bids: List[Bid] = []
         for bid in data["bids"]:
