@@ -10,25 +10,28 @@ from domain.closed_auction import ClosedAuction
 import datetime
 
 def main():
-    auctionRepo = MongoDbAuctionRepository("mongo-server")
+    auctionRepo = MongoDbAuctionRepository("cam-mongo-server")
 
     bid1 = Bid.generate_basic_bid(100,200)
     bid2 = Bid.generate_basic_bid(101,200)
     bid3 = Bid.generate_basic_bid(102,200)
     time_start1 = utils.TIME_ZONE.localize(datetime.datetime(year = 2022, month=3, day=17, hour=0, minute=0, second=0,microsecond=130002 ))
     duration1 = datetime.timedelta(days=1)
-    auction1 = ClosedAuction.generate_auction([bid1,bid2,bid3],200,time_start1,duration1)
+    auction1 = ClosedAuction.generate_auction([],200,time_start1,duration1,None)
 
-    duration2 = datetime.timedelta(days=2)
-    auction2 = ClosedAuction.generate_auction([bid1,bid2,bid3],201,time_start1,duration2)
+    auction1.generate_bid_history_as_html()
 
-    duration3 = datetime.timedelta(days=3)
-    auction3 = ClosedAuction.generate_auction([bid1,bid2,bid3],202,time_start1,duration3)
-    print("created 3 auctions; saving...")
 
-    auctionRepo.save_auction(auction1)
-    auctionRepo.save_auction(auction2)
-    auctionRepo.save_auction(auction3)
+    # duration2 = datetime.timedelta(days=2)
+    # auction2 = ClosedAuction.generate_auction([bid1,bid2,bid3],201,time_start1,duration2,None)
+
+    # duration3 = datetime.timedelta(days=3)
+    # auction3 = ClosedAuction.generate_auction([bid1,bid2,bid3],202,time_start1,duration3,None)
+    # print("created 3 auctions; saving...")
+
+    # auctionRepo.save_auction(auction1)
+    # auctionRepo.save_auction(auction2)
+    # auctionRepo.save_auction(auction3)
 
     # print()
     # print("now trying to retreive...")
@@ -42,13 +45,16 @@ def main():
     # auctionRepo.get_auction(auction1._item_id)
     # print()
 
-    print("fetching all")
-    left = time_start1 - datetime.timedelta(hours=2)
-    right = time_start1 + datetime.timedelta(days=4)
-    auctions = auctionRepo.get_auctions(left,right)
+    # print("fetching all")
+    # left = time_start1 - datetime.timedelta(hours=2)
+    # right = time_start1 + datetime.timedelta(days=4)
+    # auctions = auctionRepo.get_auctions(left,right)
 
-    for auction in auctions:
-        print(auction)
+    # for auction in auctions:
+    #     print(auction)
+
+    auction = auctionRepo.get_auction("5e8ff053-f8af-4833-86e5-9db9ba3633f5")
+    auction.generate_bid_history_as_html()
     # auctionRepo.check_server_status()
     # Issue the serverStatus command and print the results
     

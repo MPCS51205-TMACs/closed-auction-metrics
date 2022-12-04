@@ -79,7 +79,7 @@ class ClosedAuction(object):
     def get_end_time(self) -> datetime.datetime :
         return self._end_time
 
-    def show_bid_history(self, toSave: bool=True) -> Figure:
+    def show_bid_history(self, toSave: bool=False) -> Figure:
 
         times = [bid._time_received for bid in self._bids]
         for time in times:
@@ -96,18 +96,19 @@ class ClosedAuction(object):
             if not max_bid or bid._amount_in_cents > max_bid._amount_in_cents:
                 max_bid = bid
             
-        highest_bid_offer_amount = max_bid._amount_in_cents/100
-        highest_bid_offer_amount_time = max_bid._time_received
-        ax.axvline(x = self._start_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = highest_bid_offer_amount, linestyle = 'dashed')
+        highest_bid_offer_amount = max_bid._amount_in_cents/100 if max_bid else None
+        highest_bid_offer_amount_time = max_bid._time_received if max_bid else None
+        ax.axvline(x = self._start_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = self._start_price_in_cents/100*1.25, linestyle = 'dashed')
         if self._cancellation_time:
-            ax.axvline(x = self._cancellation_time, color = 'r', label = 'axvline - full height',ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
-        ax.axvline(x = self._end_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = highest_bid_offer_amount , linestyle = 'dashed')
+            ax.axvline(x = self._cancellation_time, color = 'r', label = 'axvline - full height',ymin = 0, ymax = self._start_price_in_cents/100*1.25 , linestyle = 'dashed')
+        ax.axvline(x = self._end_time, color = 'g', label = 'axvline - full height', ymin = 0, ymax = self._start_price_in_cents/100*1.25 , linestyle = 'dashed')
 
         ax.set_xlabel('time')
         ax.set_ylabel('bid offer amount [$]')
         ax.set_title(f'Auction for item "{self._item_id}"')
 
-        _annot_max(highest_bid_offer_amount_time,highest_bid_offer_amount,ax)
+        if max_bid:
+            _annot_max(highest_bid_offer_amount_time,highest_bid_offer_amount,ax)
 
         ax.tick_params(axis='x', labelrotation = 45)
 
@@ -119,7 +120,7 @@ class ClosedAuction(object):
     def generate_bid_history_as_html(self) -> Tuple[str, bool]:
 
         try: 
-            fig = self.show_bid_history()
+            fig = self.show_bid_history(True)
             tmpfile = BytesIO()
             fig.savefig(tmpfile, format='png', bbox_inches="tight")
             encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
